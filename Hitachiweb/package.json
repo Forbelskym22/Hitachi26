@@ -5,11 +5,15 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
+    "dev:simulate": "SIMULATE=true nodemon server.js",
+    "db:clear": "node scripts/db-clear.js",
+    "db:reset": "node -e \"require('fs').rmSync('./data/hitachi.db',{force:true}); console.log('[DB] Soubor smazán.');\"",
     "gen-certs": "bash scripts/gen-certs.sh",
     "gen-certs:domain": "bash scripts/gen-certs.sh"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^12.8.0",
     "express": "^4.19.2",
     "express-session": "^1.19.0",
     "mqtt": "^5.15.1"

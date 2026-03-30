@@ -1,50 +1,54 @@
+const db              = require('../db/database');
 const { ContactorEvent } = require('../models/Measurement');
 
-const EVENT_LIMIT = 200;
+const EVENT_KEEP_DAYS = 30;
 
-const CONTACTOR_NAMES = ['K1', 'K2', 'K3'];
+const stmtGetState   = db.prepare(`SELECT state, last_changed FROM contactor_states WHERE name = ?`);
+const stmtGetAll     = db.prepare(`SELECT name, state, last_changed FROM contactor_states`);
+const stmtSetState   = db.prepare(`UPDATE contactor_states SET state = ?, last_changed = strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE name = ?`);
+const stmtInsertEvt  = db.prepare(`INSERT INTO contactor_events (name, state) VALUES (?, ?)`);
+const stmtGetEvents  = db.prepare(`SELECT name, state, timestamp FROM contactor_events ORDER BY timestamp DESC LIMIT ?`);
 
-// Initial states
-const states = {
-  K1: { state: true,  lastChanged: new Date() },
-  K2: { state: false, lastChanged: new Date() },
-  K3: { state: true,  lastChanged: new Date() },
-};
-
-const events = [];
+setInterval(() => {
+  db.prepare(`DELETE FROM contactor_events WHERE timestamp < datetime('now', '-${EVENT_KEEP_DAYS} days')`).run();
+}, 60 * 60 * 1000);
 
 class ContactorRepository {
   getState(name) {
-    return states[name] ?? null;
+    const row = stmtGetState.get(name);
+    if (!row) return null;
+    return { state: Boolean(row.state), lastChanged: new Date(row.last_changed) };
   }
 
   getAllStates() {
-    return { ...states };
+    const rows = stmtGetAll.all();
+    return Object.fromEntries(
+      rows.map(r => [r.name, { state: Boolean(r.state), lastChanged: new Date(r.last_changed) }])
+    );
   }
 
-  // Sets state; logs event only if state actually changed
   setState(name, newState) {
-    const current = states[name];
+    const current = this.getState(name);
     if (!current) return null;
 
     if (current.state !== newState) {
-      current.state       = newState;
-      current.lastChanged = new Date();
-
-      const ev = new ContactorEvent({ name, state: newState });
-      events.push(ev);
-      if (events.length > EVENT_LIMIT) events.shift();
+      db.transaction(() => {
+        stmtSetState.run(newState ? 1 : 0, name);
+        stmtInsertEvt.run(name, newState ? 1 : 0);
+      })();
     }
 
-    return states[name];
+    return this.getState(name);
   }
 
   getEvents(limit = 50) {
-    return events.slice(-limit).reverse();
+    return stmtGetEvents.all(limit).map(r =>
+      new ContactorEvent({ name: r.name, state: Boolean(r.state), timestamp: new Date(r.timestamp) })
+    );
   }
 
   getNames() {
-    return CONTACTOR_NAMES;
+    return stmtGetAll.all().map(r => r.name);
   }
 }
 

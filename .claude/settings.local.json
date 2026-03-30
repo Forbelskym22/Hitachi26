@@ -13,7 +13,10 @@
       "Bash(kill -9 1138)",
       "mcp__Claude_Preview__preview_start",
       "Bash(node -e \"const b = require\\(''bcryptjs''\\); b.hash\\(''admin'', 10\\).then\\(h => { console.log\\(''hash ok:'', h.substring\\(0,20\\)\\); return b.compare\\(''admin'', h\\); }\\).then\\(r => console.log\\(''compare:'', r\\)\\).catch\\(e => console.error\\(e\\)\\)\")",
-      "Bash(taskkill //PID 18620 //F)"
+      "Bash(taskkill //PID 18620 //F)",
+      "Bash(node -e \"require\\(''./src/db/database''\\); console.log\\(''DB OK''\\)\")",
+      "Bash(xargs -I{} taskkill //PID {} //F)",
+      "Bash(node -e \":*)"
     ]
   }
 }

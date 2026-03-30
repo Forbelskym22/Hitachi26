@@ -56,20 +56,11 @@
       <span class="text-xs text-muted uppercase tracking-wide">V</span>
     </div>
 
-    <!-- Live values -->
-    <div class="grid grid-cols-3 gap-3">
-      <div class="bg-input border border-border rounded-lg p-3 text-center">
-        <p class="text-xs text-muted mb-1">L1</p>
-        <p id="v-L1" class="text-xl font-bold text-red-500">—</p>
-      </div>
-      <div class="bg-input border border-border rounded-lg p-3 text-center">
-        <p class="text-xs text-muted mb-1">L2</p>
-        <p id="v-L2" class="text-xl font-bold text-orange-400">—</p>
-      </div>
-      <div class="bg-input border border-border rounded-lg p-3 text-center">
-        <p class="text-xs text-muted mb-1">L3</p>
-        <p id="v-L3" class="text-xl font-bold text-yellow-400">—</p>
-      </div>
+    <!-- Single-phase live value -->
+    <div class="bg-input border border-border rounded-lg p-5 text-center">
+      <p class="text-xs text-muted mb-2 uppercase tracking-wide">Jednofázové měření</p>
+      <p id="v-L1" class="text-4xl font-bold text-red-500 tabular-nums">—</p>
+      <p class="text-xs text-muted mt-1">V</p>
     </div>
 
     <!-- Chart -->
@@ -85,9 +76,9 @@
           <thead>
             <tr class="text-muted border-b border-border">
               <th class="text-left py-1.5 pr-3 font-medium">Čas</th>
-              <th class="text-right py-1.5 pr-3 font-medium text-red-400">L1 (V)</th>
-              <th class="text-right py-1.5 pr-3 font-medium text-orange-400">L2 (V)</th>
-              <th class="text-right py-1.5 font-medium text-yellow-400">L3 (V)</th>
+              <th class="text-right py-1.5 pr-3 font-medium text-red-400">Avg (V)</th>
+              <th class="text-right py-1.5 pr-3 font-medium text-muted">Min</th>
+              <th class="text-right py-1.5 font-medium text-muted">Max</th>
             </tr>
           </thead>
           <tbody id="hist-voltage-body" class="divide-y divide-border/30">
@@ -105,18 +96,22 @@
       <span class="text-xs text-muted uppercase tracking-wide">A</span>
     </div>
 
-    <div class="grid grid-cols-3 gap-3">
+    <div class="grid grid-cols-2 gap-3">
       <div class="bg-input border border-border rounded-lg p-3 text-center">
         <p class="text-xs text-muted mb-1">L1</p>
-        <p id="a-L1" class="text-xl font-bold text-sky-400">—</p>
+        <p id="a-L1" class="text-xl font-bold text-sky-400 tabular-nums">—</p>
       </div>
       <div class="bg-input border border-border rounded-lg p-3 text-center">
         <p class="text-xs text-muted mb-1">L2</p>
-        <p id="a-L2" class="text-xl font-bold text-cyan-400">—</p>
+        <p id="a-L2" class="text-xl font-bold text-cyan-400 tabular-nums">—</p>
       </div>
       <div class="bg-input border border-border rounded-lg p-3 text-center">
         <p class="text-xs text-muted mb-1">L3</p>
-        <p id="a-L3" class="text-xl font-bold text-teal-400">—</p>
+        <p id="a-L3" class="text-xl font-bold text-teal-400 tabular-nums">—</p>
+      </div>
+      <div class="bg-input border border-border rounded-lg p-3 text-center">
+        <p class="text-xs text-muted mb-1">L4</p>
+        <p id="a-L4" class="text-xl font-bold text-emerald-400 tabular-nums">—</p>
       </div>
     </div>
 
@@ -134,7 +129,8 @@
               <th class="text-left py-1.5 pr-3 font-medium">Čas</th>
               <th class="text-right py-1.5 pr-3 font-medium text-sky-400">L1 (A)</th>
               <th class="text-right py-1.5 pr-3 font-medium text-cyan-400">L2 (A)</th>
-              <th class="text-right py-1.5 font-medium text-teal-400">L3 (A)</th>
+              <th class="text-right py-1.5 pr-3 font-medium text-teal-400">L3 (A)</th>
+              <th class="text-right py-1.5 font-medium text-emerald-400">L4 (A)</th>
             </tr>
           </thead>
           <tbody id="hist-current-body" class="divide-y divide-border/30">
@@ -238,18 +234,14 @@
     };
   }
 
+  // Napětí — jednofázový graf
   const voltageChart = new Chart(document.getElementById('chart-voltage'), {
     ...CHART_DEFAULTS,
-    data: {
-      datasets: [
-        makeDataset('L1', '#f87171'),
-        makeDataset('L2', '#fb923c'),
-        makeDataset('L3', '#facc15'),
-      ]
-    },
-    options: { ...CHART_DEFAULTS.options, scales: { ...CHART_DEFAULTS.options.scales, y: { ...CHART_DEFAULTS.options.scales.y, min: 200, max: 250 } } }
+    data: { datasets: [ makeDataset('Napětí', '#f87171') ] },
+    options: { ...CHART_DEFAULTS.options, plugins: { ...CHART_DEFAULTS.options.plugins, legend: { display: false } }, scales: { ...CHART_DEFAULTS.options.scales, y: { ...CHART_DEFAULTS.options.scales.y, ticks: { color: '#8b949e', font: { size: 11 } } } } }
   });
 
+  // Proud — 4 kanály
   const currentChart = new Chart(document.getElementById('chart-current'), {
     ...CHART_DEFAULTS,
     data: {
@@ -257,9 +249,10 @@
         makeDataset('L1', '#38bdf8'),
         makeDataset('L2', '#22d3ee'),
         makeDataset('L3', '#2dd4bf'),
+        makeDataset('L4', '#34d399'),
       ]
     },
-    options: { ...CHART_DEFAULTS.options, scales: { ...CHART_DEFAULTS.options.scales, y: { ...CHART_DEFAULTS.options.scales.y, min: 0 } } }
+    options: { ...CHART_DEFAULTS.options, scales: { ...CHART_DEFAULTS.options.scales, y: { ...CHART_DEFAULTS.options.scales.y } } }
   });
 
   function pushChartData(chart, history, phases) {
@@ -270,6 +263,21 @@
       }));
     });
     chart.update('none');
+  }
+
+  // ── Voltage history table (single phase) ──
+  function renderVoltageTable(tbodyId, arr) {
+    const tbody = document.getElementById(tbodyId);
+    if (!arr.length) { tbody.innerHTML = '<tr><td colspan="4" class="text-muted italic py-2 text-center">Žádná data</td></tr>'; return; }
+    tbody.innerHTML = [...arr].reverse().slice(0, 10).map(p => {
+      const ts = new Date(p.timestamp).toLocaleTimeString('cs-CZ');
+      return `<tr class="hover:bg-white/[0.02] transition-colors">
+        <td class="py-1.5 pr-3 text-muted whitespace-nowrap">${ts}</td>
+        <td class="py-1.5 pr-3 text-right tabular-nums font-mono text-red-400">${p.avg.toFixed(1)}</td>
+        <td class="py-1.5 pr-3 text-right tabular-nums font-mono text-muted text-[11px]">${p.min.toFixed(1)}</td>
+        <td class="py-1.5 text-right tabular-nums font-mono text-muted text-[11px]">${p.max.toFixed(1)}</td>
+      </tr>`;
+    }).join('');
   }
 
   // ── History table renderer ──
@@ -336,14 +344,12 @@
       if (!res.ok) return;
       const data = await res.json();
 
-      // Voltage
-      ['L1','L2','L3'].forEach(p => {
-        const el = document.getElementById(`v-${p}`);
-        if (el && data.voltage[p] != null) el.textContent = data.voltage[p].toFixed(1);
-      });
+      // Napětí — jednofázové
+      const vEl = document.getElementById('v-L1');
+      if (vEl && data.voltage.L1 != null) vEl.textContent = data.voltage.L1.toFixed(1);
 
-      // Current
-      ['L1','L2','L3'].forEach(p => {
+      // Proud — 4 kanály
+      ['L1','L2','L3','L4'].forEach(p => {
         const el = document.getElementById(`a-${p}`);
         if (el && data.current[p] != null) el.textContent = data.current[p].toFixed(2);
       });
@@ -377,10 +383,10 @@
       if (!res.ok) return;
       const data = await res.json();
 
-      pushChartData(voltageChart, data.voltage, ['L1','L2','L3']);
-      pushChartData(currentChart, data.current, ['L1','L2','L3']);
-      renderHistoryTable('hist-voltage-body', data.voltage, ['L1','L2','L3'], 1);
-      renderHistoryTable('hist-current-body', data.current, ['L1','L2','L3'], 2);
+      pushChartData(voltageChart, data.voltage, ['L1']);
+      pushChartData(currentChart, data.current, ['L1','L2','L3','L4']);
+      renderVoltageTable('hist-voltage-body', data.voltage.L1 || []);
+      renderHistoryTable('hist-current-body', data.current, ['L1','L2','L3','L4'], 2);
     } catch (_) {}
   }
 

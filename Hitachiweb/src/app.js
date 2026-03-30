@@ -5,7 +5,6 @@ const itemRoutes      = require('./routes/itemRoutes');
 const authRoutes      = require('./routes/authRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const errorHandler    = require('./middleware/errorHandler');
-const startSimulator  = require('./simulator');
 const brokerService   = require('./services/BrokerService');
 
 const app = express();
@@ -26,12 +25,12 @@ app.use('/api/auth',      authRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/items',     itemRoutes);
 
-// Broker (aktivuje se pokud je nastavena MQTT_URL)
-const brokerActive = brokerService.connect();
+// Broker
+brokerService.connect();
 
-// Simulátor běží vždy v dev módu nebo pokud broker není nakonfigurován
-if (!brokerActive || process.env.NODE_ENV !== 'production') {
-  startSimulator();
+// Simulátor — pouze při SIMULATE=true (lokální vývoj)
+if (process.env.SIMULATE === 'true') {
+  require('./simulator')();
 }
 
 app.use(errorHandler);

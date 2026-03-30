@@ -2,9 +2,11 @@ const measurementRepo = require('./repositories/MeasurementRepository');
 const contactorRepo   = require('./repositories/ContactorRepository');
 
 // Running state — random walk per channel
+// Napětí: jednofázové (pouze L1)
+// Proud: 4 kanály (L1–L4)
 const state = {
-  voltage: { L1: 230, L2: 229, L3: 231 },
-  current: { L1: 10,  L2: 12,  L3: 9   },
+  voltage: { L1: 230 },
+  current: { L1: 10, L2: 12, L3: 9, L4: 7 },
 };
 
 function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
@@ -14,11 +16,13 @@ function randomWalk(value, step, min, max) {
 }
 
 function tickMeasurements() {
-  for (const phase of ['L1', 'L2', 'L3']) {
-    state.voltage[phase] = randomWalk(state.voltage[phase], 1.5, 215, 245);
-    state.current[phase] = randomWalk(state.current[phase], 0.8, 0,   25);
+  // Napětí — jednofázové
+  state.voltage.L1 = randomWalk(state.voltage.L1, 1.5, 215, 245);
+  measurementRepo.add('voltage', 'L1', parseFloat(state.voltage.L1.toFixed(2)));
 
-    measurementRepo.add('voltage', phase, parseFloat(state.voltage[phase].toFixed(2)));
+  // Proud — 4 kanály
+  for (const phase of ['L1', 'L2', 'L3', 'L4']) {
+    state.current[phase] = randomWalk(state.current[phase], 0.8, 0, 25);
     measurementRepo.add('current', phase, parseFloat(state.current[phase].toFixed(3)));
   }
 }
