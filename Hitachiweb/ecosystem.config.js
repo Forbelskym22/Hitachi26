@@ -2,7 +2,7 @@ module.exports = {
   apps: [{
     name:        'hitachiweb',
     script:      'server.js',
-    cwd:         '/opt/hitachiweb',
+    cwd:         process.env.APP_DIR || '/opt/hitachiweb',
 
     // Automatický restart při pádu
     autorestart: true,

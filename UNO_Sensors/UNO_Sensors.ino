@@ -26,11 +26,11 @@
 // ════════════════════════════════════════════════════
 
 // WiFi
-const char* WIFI_SSID     = "YourSSID";
-const char* WIFI_PASSWORD = "YourPassword";
+const char* WIFI_SSID     = "skupina-4";
+const char* WIFI_PASSWORD = "Stanice1";
 
 // MQTT broker (IP Raspberry Pi)
-const char* MQTT_BROKER   = "192.168.1.100";
+const char* MQTT_BROKER   = "10.10.104.1";
 const int   MQTT_PORT     = 1883;
 const char* MQTT_CLIENT   = "hitachi-uno";
 const char* MQTT_PREFIX   = "hitachi";

@@ -1,45 +1,39 @@
 #!/bin/bash
 # ════════════════════════════════════════════════════════════════════════
 #  Hitachiweb — deploy / aktualizace
-#  Spusť jako:  sudo bash deploy/deploy.sh
+#  Spusť z kořene Hitachiweb složky:  sudo bash deploy/deploy.sh
 # ════════════════════════════════════════════════════════════════════════
 set -e
 
-APP_DIR="/opt/hitachiweb"
-APP_USER="hitachi"
-REPO_URL="https://github.com/YOUR_USER/Hitachi26.git"  # ← uprav
-APP_SUBDIR="Hitachiweb"
+# Cesta k aplikaci — detekuje se automaticky podle umístění skriptu
+APP_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+APP_USER="${SUDO_USER:-$(whoami)}"
 
-echo "═══ [1/4] Stahování kódu ═══"
-if [ -d "$APP_DIR/.git" ]; then
-  cd "$APP_DIR"
-  sudo -u "$APP_USER" git pull
-else
-  sudo -u "$APP_USER" git clone "$REPO_URL" /tmp/hitachi-clone
-  cp -r "/tmp/hitachi-clone/$APP_SUBDIR/." "$APP_DIR/"
-  rm -rf /tmp/hitachi-clone
-fi
-
-echo "═══ [2/4] Závislosti ═══"
+echo "═══ [1/4] Závislosti ═══"
 cd "$APP_DIR"
-sudo -u "$APP_USER" npm ci --omit=dev
+npm ci --omit=dev
+
+echo "═══ [2/4] Složky a oprávnění ═══"
+mkdir -p "$APP_DIR/data" "$APP_DIR/certs"
 
 echo "═══ [3/4] Kontrola .env ═══"
 if [ ! -f "$APP_DIR/.env" ]; then
-  echo "[!] .env neexistuje — kopíruji .env.example"
   cp "$APP_DIR/.env.example" "$APP_DIR/.env"
-  echo "[!] Uprav $APP_DIR/.env před spuštěním!"
+  echo "[!] Vytvořen .env z příkladu — uprav před spuštěním: $APP_DIR/.env"
+  echo "[!] Minimálně nastav: SESSION_SECRET, MQTT_URL"
+  exit 1
 fi
 
 echo "═══ [4/4] PM2 ═══"
-cd "$APP_DIR"
-sudo -u "$APP_USER" pm2 startOrReload ecosystem.config.js --env production
-sudo -u "$APP_USER" pm2 save
-
-# Nastav PM2 autostart při bootu (jednou)
-if ! systemctl is-enabled pm2-"$APP_USER" &>/dev/null; then
-  env PATH="$PATH:/usr/bin" pm2 startup systemd -u "$APP_USER" --hp /home/"$APP_USER" | tail -1 | bash
+if pm2 list | grep -q "hitachiweb"; then
+  pm2 reload ecosystem.config.js --env production
+else
+  pm2 start ecosystem.config.js --env production
 fi
+pm2 save
+
+# PM2 autostart při bootu (jednou)
+pm2 startup | tail -1 | bash 2>/dev/null || true
 
 echo ""
 echo "╔════════════════════════════════════════════════╗"
