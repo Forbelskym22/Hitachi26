@@ -11,6 +11,13 @@ DOMAIN="${1:-localhost}"
 CERTS_DIR="certs"
 CA_DIR="$CERTS_DIR/ca"
 
+# Detekuj jestli je argument IP adresa nebo hostname
+if [[ "$DOMAIN" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  SAN="IP.1 = $DOMAIN\nIP.2 = 127.0.0.1\nDNS.1 = localhost"
+else
+  SAN="DNS.1 = $DOMAIN\nDNS.2 = localhost\nIP.1  = 127.0.0.1"
+fi
+
 mkdir -p "$CERTS_DIR" "$CA_DIR"
 
 # ── 1. CA (pokud ještě neexistuje) ──────────────────────────────────────────
@@ -44,16 +51,7 @@ openssl req -new \
   -subj "/CN=$DOMAIN/O=Hitachi/C=CZ"
 
 # SAN extension (nutné pro Chrome/Edge)
-cat > "$CERTS_DIR/ext.cnf" <<EOF
-[req]
-req_extensions = v3_req
-[v3_req]
-subjectAltName = @alt_names
-[alt_names]
-DNS.1 = $DOMAIN
-DNS.2 = localhost
-IP.1  = 127.0.0.1
-EOF
+printf "[req]\nreq_extensions = v3_req\n[v3_req]\nsubjectAltName = @alt_names\n[alt_names]\n$SAN\n" > "$CERTS_DIR/ext.cnf"
 
 openssl x509 -req \
   -in "$CERTS_DIR/server.csr" \
