@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="cs" class="h-full bg-[#0d1117]">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hitachiweb</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            surface: '#161b22',
+            border:  '#30363d',
+            muted:   '#8b949e',
+            input:   '#0d1117',
+          },
+          keyframes: {
+            fadeup: {
+              '0%':   { opacity: '0', transform: 'translateY(10px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            }
+          },
+          animation: {
+            fadeup: 'fadeup .25s ease',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .view { display: none; }
+    .view.active { display: block; }
+  </style>
+</head>
+<body class="h-full flex items-center justify-center font-sans text-[#e6edf3]">
+
+<div class="w-full max-w-sm bg-surface border border-border rounded-lg shadow-2xl px-9 py-10 animate-fadeup">
+
+  <!-- ── LOGIN ── -->
+  <div id="view-login" class="view active">
+    <h2 class="text-xl font-semibold mb-1">Přihlášení</h2>
+    <p class="text-sm text-muted mb-7">Zadejte své přihlašovací údaje</p>
+
+    <div id="login-alert" class="hidden text-sm px-4 py-2.5 rounded mb-5 bg-red-500/10 border border-red-500/40 text-red-400"></div>
+
+    <form id="login-form" autocomplete="off" class="space-y-4">
+      <div>
+        <label class="block text-xs font-medium text-muted uppercase tracking-wide mb-1.5" for="username">Uživatelské jméno</label>
+        <input id="username" type="text" placeholder="username" required
+          class="w-full bg-input border border-border rounded-lg text-[#e6edf3] text-sm px-3.5 py-2.5 outline-none focus:border-red-600 transition-colors" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-muted uppercase tracking-wide mb-1.5" for="password">Heslo</label>
+        <input id="password" type="password" placeholder="••••••••" required
+          class="w-full bg-input border border-border rounded-lg text-[#e6edf3] text-sm px-3.5 py-2.5 outline-none focus:border-red-600 transition-colors" />
+      </div>
+      <button id="login-btn" type="submit"
+        class="w-full mt-1 py-2.5 bg-red-600 hover:bg-red-500 active:scale-[.98] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-sm rounded-lg transition-all">
+        Přihlásit se
+      </button>
+    </form>
+  </div>
+
+  <!-- ── CHANGE PASSWORD ── -->
+  <div id="view-change" class="view">
+    <h2 class="text-xl font-semibold mb-1">Nastavte nové heslo</h2>
+    <p class="text-sm text-muted mb-7">Z bezpečnostních důvodů je nutné změnit výchozí heslo před pokračováním.</p>
+
+    <div id="change-alert" class="hidden text-sm px-4 py-2.5 rounded mb-5 bg-red-500/10 border border-red-500/40 text-red-400"></div>
+
+    <form id="change-form" autocomplete="off" class="space-y-4">
+      <div>
+        <label class="block text-xs font-medium text-muted uppercase tracking-wide mb-1.5" for="new-password">Nové heslo</label>
+        <input id="new-password" type="password" placeholder="••••••••" required
+          class="w-full bg-input border border-border rounded-lg text-[#e6edf3] text-sm px-3.5 py-2.5 outline-none focus:border-red-600 transition-colors" />
+        <p class="text-xs text-muted mt-1.5">Minimálně 6 znaků</p>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-muted uppercase tracking-wide mb-1.5" for="confirm-password">Potvrzení hesla</label>
+        <input id="confirm-password" type="password" placeholder="••••••••" required
+          class="w-full bg-input border border-border rounded-lg text-[#e6edf3] text-sm px-3.5 py-2.5 outline-none focus:border-red-600 transition-colors" />
+      </div>
+      <button id="change-btn" type="submit"
+        class="w-full mt-1 py-2.5 bg-red-600 hover:bg-red-500 active:scale-[.98] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-sm rounded-lg transition-all">
+        Uložit heslo
+      </button>
+    </form>
+  </div>
+
+  <!-- ── DASHBOARD ── -->
+  <div id="view-dashboard" class="view">
+    <div class="flex justify-between items-center mb-6">
+      <p class="text-sm text-muted">Přihlášen jako <strong class="text-[#e6edf3] font-medium" id="dash-username"></strong></p>
+      <button id="logout-btn"
+        class="text-xs text-muted border border-border rounded-lg px-3.5 py-1.5 hover:text-[#e6edf3] hover:border-muted transition-colors">
+        Odhlásit
+      </button>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3.5">
+      <div class="bg-input border border-border rounded-lg p-4">
+        <p class="text-xs text-muted uppercase tracking-wide mb-2">Stav serveru</p>
+        <p id="server-status" class="text-2xl font-bold text-red-600">—</p>
+      </div>
+      <div class="bg-input border border-border rounded-lg p-4">
+        <p class="text-xs text-muted uppercase tracking-wide mb-2">Verze</p>
+        <p class="text-2xl font-bold text-red-600">1.0</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const views = {
+    login:     document.getElementById('view-login'),
+    change:    document.getElementById('view-change'),
+    dashboard: document.getElementById('view-dashboard'),
+  };
+
+  function showView(name) {
+    Object.values(views).forEach(v => v.classList.remove('active'));
+    views[name].classList.add('active');
+  }
+
+  function showAlert(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.classList.remove('hidden');
+  }
+
+  function hideAlert(id) {
+    document.getElementById(id).classList.add('hidden');
+  }
+
+  async function init() {
+    try {
+      const res = await fetch('/api/auth/me');
+      if (res.ok) {
+        const data = await res.json();
+        data.mustChangePassword ? showView('change') : enterDashboard(data.username);
+      }
+    } catch (_) {}
+  }
+
+  document.getElementById('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideAlert('login-alert');
+    const btn = document.getElementById('login-btn');
+    btn.disabled = true;
+    btn.textContent = 'Přihlašuji…';
+
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: document.getElementById('username').value.trim(),
+          password: document.getElementById('password').value,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) { showAlert('login-alert', data.error || 'Chyba přihlášení'); return; }
+      data.mustChangePassword ? showView('change') : enterDashboard(data.username);
+    } catch (_) {
+      showAlert('login-alert', 'Nelze se spojit se serverem');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Přihlásit se';
+    }
+  });
+
+  document.getElementById('change-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideAlert('change-alert');
+    const newPwd  = document.getElementById('new-password').value;
+    const confirm = document.getElementById('confirm-password').value;
+    if (newPwd !== confirm) { showAlert('change-alert', 'Hesla se neshodují'); return; }
+
+    const btn = document.getElementById('change-btn');
+    btn.disabled = true;
+    btn.textContent = 'Ukládám…';
+
+    try {
+      const res = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newPassword: newPwd }),
+      });
+      const data = await res.json();
+      if (!res.ok) { showAlert('change-alert', data.error || 'Chyba při změně hesla'); return; }
+      enterDashboard(data.username);
+    } catch (_) {
+      showAlert('change-alert', 'Nelze se spojit se serverem');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Uložit heslo';
+    }
+  });
+
+  document.getElementById('logout-btn').addEventListener('click', async () => {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    document.getElementById('username').value = '';
+    document.getElementById('password').value = '';
+    showView('login');
+  });
+
+  function enterDashboard(username) {
+    document.getElementById('dash-username').textContent = username;
+    showView('dashboard');
+    fetch('/health')
+      .then(r => r.json())
+      .then(d => document.getElementById('server-status').textContent = d.status === 'ok' ? 'OK' : 'ERR')
+      .catch(() => document.getElementById('server-status').textContent = 'ERR');
+  }
+
+  init();
+</script>
+</body>
+</html>

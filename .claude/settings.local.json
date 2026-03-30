@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(npm start:*)",
+      "Bash(node server.js)",
+      "Bash(taskkill /F /IM node.exe)",
+      "Bash(pkill -f \"node server.js\")",
+      "Bash(pkill -f \"node -e\")",
+      "Bash(netstat -ano)",
+      "Bash(tasklist /FI \"PID eq 21380\")",
+      "Bash(kill -9 21380)",
+      "Bash(kill -9 1138)",
+      "mcp__Claude_Preview__preview_start"
+    ]
+  }
+}
