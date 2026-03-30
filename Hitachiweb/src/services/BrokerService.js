@@ -19,14 +19,16 @@ const contactorRepo   = require('../repositories/ContactorRepository');
 
 const TOPIC_PREFIX = process.env.MQTT_TOPIC_PREFIX || 'hitachi';
 
-const PHASES     = new Set(['L1', 'L2', 'L3']);
-const CONTACTORS = new Set(['K1', 'K2', 'K3']);
+const VOLTAGE_PHASES = new Set(['L1', 'L2', 'L3']);
+const CURRENT_PHASES = new Set(['L1', 'L2', 'L3', 'L4']);
+const CONTACTORS     = new Set(['K1', 'K2', 'K3']);
 
 class BrokerService {
   constructor() {
-    this.client    = null;
-    this.connected = false;
-    this._url      = process.env.MQTT_URL || null;
+    this.client        = null;
+    this.connected     = false;
+    this._url          = process.env.MQTT_URL || null;
+    this.lastMessageAt = null;
   }
 
   /**
@@ -95,12 +97,17 @@ class BrokerService {
       const channel = parts[2]; // L1/L2/L3 or K1/K2/K3
       const msg     = JSON.parse(raw.toString());
 
-      if ((type === 'voltage' || type === 'current') && PHASES.has(channel)) {
+      if (type === 'voltage' && VOLTAGE_PHASES.has(channel)) {
         const value = parseFloat(msg.value);
-        if (!isNaN(value)) measurementRepo.add(type, channel, value);
+        if (!isNaN(value)) { measurementRepo.add(type, channel, value); this.lastMessageAt = new Date(); }
+
+      } else if (type === 'current' && CURRENT_PHASES.has(channel)) {
+        const value = parseFloat(msg.value);
+        if (!isNaN(value)) { measurementRepo.add(type, channel, value); this.lastMessageAt = new Date(); }
 
       } else if (type === 'contactor' && CONTACTORS.has(channel)) {
         contactorRepo.setState(channel, Boolean(msg.state));
+        this.lastMessageAt = new Date();
       }
 
     } catch (err) {
@@ -114,8 +121,9 @@ class BrokerService {
     this.client.publish(`${TOPIC_PREFIX}/${topic}`, JSON.stringify(payload));
   }
 
-  isConnected() { return this.connected; }
-  isConfigured() { return Boolean(this._url); }
+  isConnected()    { return this.connected; }
+  isConfigured()   { return Boolean(this._url); }
+  getLastMessageAt() { return this.lastMessageAt; }
 }
 
 module.exports = new BrokerService();

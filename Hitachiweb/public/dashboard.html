@@ -25,6 +25,11 @@
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: #0d1117; }
     ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+    @keyframes blink-green {
+      0%   { background-color: #22c55e; box-shadow: 0 0 6px #22c55e; }
+      100% { background-color: #dc2626; box-shadow: none; }
+    }
+    .dot-blink { animation: blink-green 0.6s ease-out; }
   </style>
 </head>
 <body class="min-h-full text-[#e6edf3] font-sans">
@@ -32,10 +37,11 @@
 <!-- ── HEADER ── -->
 <header class="sticky top-0 z-10 bg-[#0d1117] border-b border-border px-6 py-3 flex items-center justify-between">
   <div class="flex items-center gap-3">
-    <span class="w-2.5 h-2.5 rounded-full bg-red-600 inline-block"></span>
+    <span id="live-dot" class="w-2.5 h-2.5 rounded-full bg-red-600 inline-block"></span>
     <span class="font-semibold tracking-wide">Dashboard</span>
     <span id="last-update" class="text-xs text-muted ml-2"></span>
     <span id="data-source" class="text-xs px-2 py-0.5 rounded-full border border-border text-muted ml-1"></span>
+    <span id="mqtt-last" class="text-xs text-muted ml-1 hidden">MQTT: —</span>
   </div>
   <div class="flex items-center gap-4">
     <span class="text-sm text-muted">Přihlášen jako <strong id="header-user" class="text-[#e6edf3] font-medium"></strong></span>
@@ -395,6 +401,23 @@
       } else {
         src.textContent = 'SIM';
         src.className = 'text-xs px-2 py-0.5 rounded-full border border-border text-muted ml-1';
+      }
+
+      // Poslední MQTT zpráva + bliknutí tečky
+      const mqttEl = document.getElementById('mqtt-last');
+      const dot    = document.getElementById('live-dot');
+      if (data.lastMessageAt) {
+        const t = new Date(data.lastMessageAt).toLocaleTimeString('cs-CZ');
+        mqttEl.textContent = 'MQTT: ' + t;
+        mqttEl.classList.remove('hidden');
+        // Blikni tečkou při každém novém timestampu
+        if (mqttEl.dataset.last !== data.lastMessageAt) {
+          mqttEl.dataset.last = data.lastMessageAt;
+          dot.classList.remove('dot-blink');
+          void dot.offsetWidth; // reflow pro restart animace
+          dot.classList.add('dot-blink');
+          dot.addEventListener('animationend', () => dot.classList.remove('dot-blink'), { once: true });
+        }
       }
 
     } catch (_) {}

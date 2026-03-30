@@ -9,6 +9,7 @@ class DashboardService {
       contactors:    contactorRepo.getAllStates(),
       recentEvents:  contactorRepo.getEvents(20),
       source:        brokerService.isConnected() ? 'broker' : 'simulator',
+      lastMessageAt: brokerService.getLastMessageAt(),
       timestamp:     new Date(),
     };
   }
