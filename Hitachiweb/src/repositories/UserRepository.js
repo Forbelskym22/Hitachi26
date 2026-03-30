@@ -1,22 +1,36 @@
 const bcrypt = require('bcryptjs');
-const User = require('../models/User');
+const db      = require('../db/database');
+const User    = require('../models/User');
 
-// In-memory store — nahradit DB vrstvou dle potřeby
-const users = new Map();
+const stmtFind = db.prepare(`SELECT username, password_hash, must_change_password FROM users WHERE username = ?`);
+const stmtSave = db.prepare(`
+  INSERT INTO users (username, password_hash, must_change_password)
+  VALUES (?, ?, ?)
+  ON CONFLICT(username) DO UPDATE SET
+    password_hash        = excluded.password_hash,
+    must_change_password = excluded.must_change_password
+`);
 
-// Seed: výchozí admin účet s heslem "admin" (mustChangePassword = true)
-(async () => {
-  const hash = await bcrypt.hash('admin', 10);
-  users.set('admin', new User({ username: 'admin', passwordHash: hash, mustChangePassword: true }));
-})();
+// Seed admin jednou — pokud ještě neexistuje
+const existing = stmtFind.get('admin');
+if (!existing) {
+  const hash = bcrypt.hashSync('admin', 10);
+  stmtSave.run('admin', hash, 1);
+}
 
 class UserRepository {
   findByUsername(username) {
-    return users.get(username) ?? null;
+    const row = stmtFind.get(username);
+    if (!row) return null;
+    return new User({
+      username:           row.username,
+      passwordHash:       row.password_hash,
+      mustChangePassword: Boolean(row.must_change_password),
+    });
   }
 
   save(user) {
-    users.set(user.username, user);
+    stmtSave.run(user.username, user.passwordHash, user.mustChangePassword ? 1 : 0);
     return user;
   }
 }

@@ -52,6 +52,12 @@ db.exec(`
     state        INTEGER NOT NULL DEFAULT 0,
     last_changed TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
   );
+
+  CREATE TABLE IF NOT EXISTS users (
+    username            TEXT    PRIMARY KEY,
+    password_hash       TEXT    NOT NULL,
+    must_change_password INTEGER NOT NULL DEFAULT 0
+  );
 `);
 
 // Seed initial contactor states if empty

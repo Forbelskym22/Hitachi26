@@ -29,7 +29,7 @@ if [ ! -f "$CA_DIR/ca.key" ]; then
     -key "$CA_DIR/ca.key" \
     -sha256 -days 3650 \
     -out "$CA_DIR/ca.crt" \
-    -subj "/CN=Hitachiweb CA/O=Hitachi/C=CZ"
+    -subj "/CN=HitaciSoutezSK4/O=HitaciSoutezSK4/C=CZ"
 
   echo "[CA] Hotovo: $CA_DIR/ca.crt"
   echo ""
@@ -48,7 +48,7 @@ openssl genrsa -out "$CERTS_DIR/key.pem" 2048
 openssl req -new \
   -key "$CERTS_DIR/key.pem" \
   -out "$CERTS_DIR/server.csr" \
-  -subj "/CN=$DOMAIN/O=Hitachi/C=CZ"
+  -subj "/CN=$DOMAIN/O=HitaciSoutezSK4/C=CZ"
 
 # SAN extension (nutné pro Chrome/Edge)
 printf "[req]\nreq_extensions = v3_req\n[v3_req]\nsubjectAltName = @alt_names\n[alt_names]\n$SAN\n" > "$CERTS_DIR/ext.cnf"
