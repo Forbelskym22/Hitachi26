@@ -106,19 +106,19 @@
 
     <div class="grid grid-cols-2 gap-3">
       <div class="bg-input border border-border rounded-lg p-3 text-center">
-        <p class="text-xs text-muted mb-1">L1</p>
+        <p class="text-xs text-muted mb-1">I1</p>
         <p id="a-L1" class="text-xl font-bold text-sky-400 tabular-nums">—</p>
       </div>
       <div class="bg-input border border-border rounded-lg p-3 text-center">
-        <p class="text-xs text-muted mb-1">L2</p>
+        <p class="text-xs text-muted mb-1">I2</p>
         <p id="a-L2" class="text-xl font-bold text-cyan-400 tabular-nums">—</p>
       </div>
       <div class="bg-input border border-border rounded-lg p-3 text-center">
-        <p class="text-xs text-muted mb-1">L3</p>
+        <p class="text-xs text-muted mb-1">I3</p>
         <p id="a-L3" class="text-xl font-bold text-teal-400 tabular-nums">—</p>
       </div>
       <div class="bg-input border border-border rounded-lg p-3 text-center">
-        <p class="text-xs text-muted mb-1">L4</p>
+        <p class="text-xs text-muted mb-1">I4</p>
         <p id="a-L4" class="text-xl font-bold text-emerald-400 tabular-nums">—</p>
       </div>
     </div>
@@ -135,10 +135,10 @@
           <thead>
             <tr class="text-muted border-b border-border">
               <th class="text-left py-1.5 pr-3 font-medium">Čas</th>
-              <th class="text-right py-1.5 pr-3 font-medium text-sky-400">L1 (A)</th>
-              <th class="text-right py-1.5 pr-3 font-medium text-cyan-400">L2 (A)</th>
-              <th class="text-right py-1.5 pr-3 font-medium text-teal-400">L3 (A)</th>
-              <th class="text-right py-1.5 font-medium text-emerald-400">L4 (A)</th>
+              <th class="text-right py-1.5 pr-3 font-medium text-sky-400">I1 (A)</th>
+              <th class="text-right py-1.5 pr-3 font-medium text-cyan-400">I2 (A)</th>
+              <th class="text-right py-1.5 pr-3 font-medium text-teal-400">I3 (A)</th>
+              <th class="text-right py-1.5 font-medium text-emerald-400">I4 (A)</th>
             </tr>
           </thead>
           <tbody id="hist-current-body" class="divide-y divide-border/30">
@@ -269,10 +269,10 @@
     ...CHART_DEFAULTS,
     data: {
       datasets: [
-        makeDataset('L1', '#38bdf8'),
-        makeDataset('L2', '#22d3ee'),
-        makeDataset('L3', '#2dd4bf'),
-        makeDataset('L4', '#34d399'),
+        makeDataset('I1', '#38bdf8'),
+        makeDataset('I2', '#22d3ee'),
+        makeDataset('I3', '#2dd4bf'),
+        makeDataset('I4', '#34d399'),
       ]
     },
     options: { ...CHART_DEFAULTS.options, scales: { ...CHART_DEFAULTS.options.scales, y: { ...CHART_DEFAULTS.options.scales.y } } }
