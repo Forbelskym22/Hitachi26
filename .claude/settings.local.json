@@ -16,7 +16,9 @@
       "Bash(taskkill //PID 18620 //F)",
       "Bash(node -e \"require\\(''./src/db/database''\\); console.log\\(''DB OK''\\)\")",
       "Bash(xargs -I{} taskkill //PID {} //F)",
-      "Bash(node -e \":*)"
+      "Bash(node -e \":*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ]
   }
 }
