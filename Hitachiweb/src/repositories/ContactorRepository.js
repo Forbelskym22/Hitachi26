@@ -47,6 +47,10 @@ class ContactorRepository {
     );
   }
 
+  getEventsForExport(limit = 2000) {
+    return stmtGetEvents.all(limit);
+  }
+
   getNames() {
     return stmtGetAll.all().map(r => r.name);
   }

@@ -53,7 +53,11 @@
   <section class="bg-surface border border-border rounded-lg p-5 flex flex-col gap-4">
     <div class="flex items-center justify-between">
       <h2 class="font-semibold text-base">Napětí</h2>
-      <span class="text-xs text-muted uppercase tracking-wide">V</span>
+      <div class="flex items-center gap-2">
+        <span class="text-xs text-muted uppercase tracking-wide">V</span>
+        <a href="/api/dashboard/export/voltage" download="voltage.csv"
+           class="text-xs px-2 py-0.5 rounded border border-border text-muted hover:text-white hover:border-zinc-500 transition-colors">CSV ↓</a>
+      </div>
     </div>
 
     <!-- Single-phase live value -->
@@ -93,7 +97,11 @@
   <section class="bg-surface border border-border rounded-lg p-5 flex flex-col gap-4">
     <div class="flex items-center justify-between">
       <h2 class="font-semibold text-base">Proud</h2>
-      <span class="text-xs text-muted uppercase tracking-wide">A</span>
+      <div class="flex items-center gap-2">
+        <span class="text-xs text-muted uppercase tracking-wide">A</span>
+        <a href="/api/dashboard/export/current" download="current.csv"
+           class="text-xs px-2 py-0.5 rounded border border-border text-muted hover:text-white hover:border-zinc-500 transition-colors">CSV ↓</a>
+      </div>
     </div>
 
     <div class="grid grid-cols-2 gap-3">
@@ -145,7 +153,11 @@
   <section class="bg-surface border border-border rounded-lg p-5 flex flex-col gap-4">
     <div class="flex items-center justify-between">
       <h2 class="font-semibold text-base">Stykače</h2>
-      <span class="text-xs text-muted uppercase tracking-wide">Stav</span>
+      <div class="flex items-center gap-2">
+        <span class="text-xs text-muted uppercase tracking-wide">Stav</span>
+        <a href="/api/dashboard/export/contactors" download="contactors.csv"
+           class="text-xs px-2 py-0.5 rounded border border-border text-muted hover:text-white hover:border-zinc-500 transition-colors">CSV ↓</a>
+      </div>
     </div>
 
     <!-- Contactor states -->
@@ -177,6 +189,17 @@
   </section>
 
 </main>
+
+<!-- ── Bulk export bar ── -->
+<div class="px-6 pb-6">
+  <div class="bg-surface border border-border rounded-lg px-5 py-3 flex items-center gap-3">
+    <span class="text-xs text-muted uppercase tracking-wide flex-1">Export všech dat</span>
+    <button id="export-all-btn"
+      class="text-xs px-3 py-1 rounded bg-zinc-700 hover:bg-zinc-600 text-white transition-colors">
+      Stáhnout vše (3× CSV)
+    </button>
+  </div>
+</div>
 
 <script>
   // ── Auth check ──
@@ -395,6 +418,21 @@
   fetchHistory();
   setInterval(fetchLive,    2_000);
   setInterval(fetchHistory, 10_000);
+
+  // ── Bulk CSV export ──
+  document.getElementById('export-all-btn').addEventListener('click', () => {
+    const files = ['voltage', 'current', 'contactors'];
+    files.forEach((type, i) => {
+      setTimeout(() => {
+        const a = document.createElement('a');
+        a.href = `/api/dashboard/export/${type}`;
+        a.download = `${type}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }, i * 200);
+    });
+  });
 </script>
 </body>
 </html>

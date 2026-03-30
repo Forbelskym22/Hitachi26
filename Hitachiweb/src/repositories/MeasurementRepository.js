@@ -22,6 +22,11 @@ const stmtAgg = db.prepare(
    WHERE type = ? AND phase = ?
    ORDER BY timestamp DESC LIMIT ?`
 );
+const stmtRawExport = db.prepare(
+  `SELECT phase, value, timestamp FROM measurements
+   WHERE type = ?
+   ORDER BY timestamp DESC LIMIT ?`
+);
 // Pending raw readings for aggregation (in-memory, flushed every AGG_INTERVAL)
 const pending = {
   voltage: { L1: [], L2: [], L3: [] },
@@ -89,6 +94,10 @@ class MeasurementRepository {
     return stmtAgg.all(type, phase, limit).reverse().map(r =>
       new AggregatedMeasurement({ type, phase, avg: r.avg, min: r.min, max: r.max, timestamp: new Date(r.timestamp) })
     );
+  }
+
+  getRawForExport(type, limit = 2000) {
+    return stmtRawExport.all(type, limit);
   }
 
   getAllAggregated(limit = 50) {
