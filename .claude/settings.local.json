@@ -18,7 +18,8 @@
       "Bash(xargs -I{} taskkill //PID {} //F)",
       "Bash(node -e \":*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ]
   }
 }

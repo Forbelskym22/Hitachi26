@@ -37,6 +37,11 @@ const char* MQTT_PREFIX   = "hitachi";
 // const char* MQTT_USER  = "";   // odkomentuj pokud broker vyžaduje auth
 // const char* MQTT_PASS  = "";
 
+// Kalibrace napětí (dělič R1=39kΩ, R2=10kΩ)
+// Buď nech výchozí hodnotu (0.00598) a zavolej voltage.calibrate(XX.X) v setup(),
+// nebo změř multimetrem a nastav: VOLTAGE_SCALE = napětí_multimetru / raw_průměr
+const float VOLTAGE_SCALE = 0.00598;  // (5.0/4096) * 4.9
+
 // Intervaly (ms)
 const unsigned long PUBLISH_INTERVAL    = 1000;   // odeslání měření
 const unsigned long CONTACTOR_KEEPALIVE = 30000;  // periodický stav stykačů
@@ -65,13 +70,29 @@ const unsigned long CONTACTOR_KEEPALIVE = 30000;  // periodický stav stykačů
 
 class VoltageSensor {
   int   pin;
-  float calibrationFactor;
-  const float REFERENCE_VOLTAGE = 24.0;
-  const int   ADC_RES           = 4096;
+  float scale;
+  // Dělič R1=39kΩ, R2=10kΩ → poměr = (R1+R2)/R2 = 4.9
+  // scale = (ADC_VREF / ADC_RES) * divider_ratio = (5.0 / 4096) * 4.9 = 0.00598
+  // Nebo zavolej calibrate(known_voltage) s multimetrem.
+  const float ADC_VREF = 5.0;
+  const int   ADC_RES  = 4096;
+  const int   SAMPLES  = 64;
 public:
-  VoltageSensor(int pin) : pin(pin), calibrationFactor(0.0) {}
-  void  calibrate() { int raw = analogRead(pin); calibrationFactor = (raw > 0) ? (REFERENCE_VOLTAGE / raw) : 0; }
-  float read()      { return analogRead(pin) * calibrationFactor; }
+  VoltageSensor(int pin, float scale = 0.00598) : pin(pin), scale(scale) {}
+
+  // Zavolej jednou v setup() — změř multimetrem skutečné napětí a předej sem.
+  void calibrate(float knownVoltage) {
+    long sum = 0;
+    for (int i = 0; i < SAMPLES; i++) { sum += analogRead(pin); delayMicroseconds(100); }
+    float raw = sum / (float)SAMPLES;
+    if (raw > 0) scale = knownVoltage / raw;
+  }
+
+  float read() {
+    long sum = 0;
+    for (int i = 0; i < SAMPLES; i++) { sum += analogRead(pin); delayMicroseconds(100); }
+    return (sum / (float)SAMPLES) * scale;
+  }
 };
 
 class CurrentSensor {
@@ -147,7 +168,9 @@ void publishValue(const char* type, const char* channel, float value) {
   char topic[64], payload[32];
   buildTopic(topic, type, channel);
   snprintf(payload, sizeof(payload), "{\"value\":%.3f}", value);
-  mqtt.publish(topic, payload, true);  // retain=true
+  bool ok = mqtt.publish(topic, payload, true);
+  Serial.print(ok ? "  [TX] " : "  [TX FAIL] ");
+  Serial.print(topic); Serial.print(" → "); Serial.println(payload);
 }
 
 // Publikuje stav stykače: {"state": true}
@@ -155,7 +178,9 @@ void publishContactor(const char* name, bool state) {
   char topic[64], payload[20];
   buildTopic(topic, "contactor", name);
   snprintf(payload, sizeof(payload), "{\"state\":%s}", state ? "true" : "false");
-  mqtt.publish(topic, payload, true);
+  bool ok = mqtt.publish(topic, payload, true);
+  Serial.print(ok ? "  [TX] " : "  [TX FAIL] ");
+  Serial.print(topic); Serial.print(" → "); Serial.println(payload);
 }
 
 // ════════════════════════════════════════════════════
@@ -196,7 +221,7 @@ bool connectMQTT() {
 //  INSTANCE
 // ════════════════════════════════════════════════════
 
-VoltageSensor voltage(PIN_VOLTAGE);
+VoltageSensor voltage(PIN_VOLTAGE, VOLTAGE_SCALE);
 CurrentSensor current[4] = { PIN_CURRENT_1, PIN_CURRENT_2, PIN_CURRENT_3, PIN_CURRENT_4 };
 Contactor     contactor[3] = { PIN_CONTACTOR_1, PIN_CONTACTOR_2, PIN_CONTACTOR_3 };
 Display       display;
@@ -215,7 +240,12 @@ void setup() {
   Serial.begin(115200);
   analogReadResolution(12);
 
-  voltage.calibrate();
+  Serial.println("═══ Hitachi UNO start ═══");
+  // Kalibrace: nastav skutečné napětí ze zdroje (změř multimetrem)
+  delay(500);  // počkej na ustálení ADC
+  Serial.print("[CAL] Kalibrace napětí...");
+  voltage.calibrate(24.0);   // ← uprav na hodnotu z multimetru
+  Serial.print(" hotovo → "); Serial.print(voltage.read(), 2); Serial.println("V");
   for (int i = 0; i < 3; i++) contactor[i].begin();
 
   display.begin();
@@ -260,10 +290,18 @@ void loop() {
     // Displej
     display.update(v, currVals, contVals, wifiOk, mqttOk);
 
-    // Serial debug
-    Serial.print("V="); Serial.print(v, 2);
-    for (int i = 0; i < 4; i++) { Serial.print(" I"); Serial.print(i+1); Serial.print("="); Serial.print(currVals[i], 2); }
-    Serial.println(mqttOk ? " [MQTT OK]" : " [MQTT --]");
+    // Serial debug — hlavička cyklu
+    Serial.println("─────────────────────────────");
+    Serial.print("[WiFi] "); Serial.print(wifiOk ? "OK  IP: " : "OFFLINE");
+    if (wifiOk) Serial.println(WiFi.localIP()); else Serial.println();
+    Serial.print("[MQTT] "); Serial.println(mqttOk ? "OK" : "OFFLINE");
+    Serial.print("[DATA] V="); Serial.print(v, 2); Serial.print("V");
+    for (int i = 0; i < 4; i++) {
+      Serial.print("  I"); Serial.print(i+1);
+      Serial.print("="); Serial.print(currVals[i], 2); Serial.print("A");
+    }
+    Serial.println();
+    if (!mqttOk) Serial.println("[WARN] Data NEODESÍLÁNA — broker nedostupný");
   }
 
   // ── Stykače: reaguj na změnu + keepalive ─────────
@@ -275,8 +313,8 @@ void loop() {
     if ((changed || keepalive) && mqttOk) {
       publishContactor(CONTACTOR_NAMES[i], contactor[i].getLastState());
       if (changed) {
-        Serial.print("[MQTT] "); Serial.print(CONTACTOR_NAMES[i]);
-        Serial.println(contactor[i].getLastState() ? " SEPNUT" : " ROZEPNUT");
+        Serial.print("[STYKAC] "); Serial.print(CONTACTOR_NAMES[i]);
+        Serial.println(contactor[i].getLastState() ? " → SEPNUT" : " → ROZEPNUT");
       }
     }
   }

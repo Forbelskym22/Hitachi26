@@ -1,8 +1,10 @@
+const APP_DIR = process.env.APP_DIR || `${process.env.HOME}/soutez/Hitachi26/Hitachiweb`;
+
 module.exports = {
   apps: [{
     name:        'hitachiweb',
     script:      'server.js',
-    cwd:         process.env.APP_DIR || '/opt/hitachiweb',
+    cwd:         APP_DIR,
 
     // Automatický restart při pádu
     autorestart: true,
@@ -19,8 +21,8 @@ module.exports = {
       MQTT_URL:          'mqtt://127.0.0.1:1883',
       MQTT_TOPIC_PREFIX: 'hitachi',
 
-      // SQLite — cesta k datové složce
-      DB_PATH: '/opt/hitachiweb/data',
+      // SQLite — relativně k APP_DIR
+      DB_PATH: `${APP_DIR}/data`,
     },
 
     // Dev prostředí (lokálně)
@@ -29,10 +31,10 @@ module.exports = {
       HTTP_PORT: 3000,
     },
 
-    // Logy
-    out_file:  '/var/log/hitachiweb/out.log',
-    error_file:'/var/log/hitachiweb/error.log',
+    // Logy — relativně k APP_DIR
+    out_file:        `${APP_DIR}/logs/out.log`,
+    error_file:      `${APP_DIR}/logs/error.log`,
     log_date_format: 'YYYY-MM-DD HH:mm:ss',
-    merge_logs: true,
+    merge_logs:      true,
   }],
 };
