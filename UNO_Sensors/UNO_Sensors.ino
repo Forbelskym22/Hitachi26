@@ -126,12 +126,13 @@ class Display {
   void value(int x, int y, float v, const char* u) { tft.fillRect(x,y,120,16,ILI9341_BLACK); tft.setTextColor(ILI9341_WHITE); tft.setTextSize(2); tft.setCursor(x,y); tft.print(v,2); tft.print(u); }
   void status(int x, int y, bool on)             { tft.fillRect(x,y,80,16,ILI9341_BLACK); tft.setTextSize(2); tft.setTextColor(on?ILI9341_GREEN:ILI9341_RED); tft.setCursor(x,y); tft.print(on?"SEPNUT":"ROZEP."); }
   void wifiStatus(bool ok, bool mqtt)            {
-    tft.fillRect(0,310,240,10,ILI9341_BLACK);
+    // Pravý horní roh — nekryje stykače
+    tft.fillRect(120,0,120,10,ILI9341_BLACK);
     tft.setTextSize(1);
     tft.setTextColor(ok ? ILI9341_GREEN : ILI9341_RED);
-    tft.setCursor(0,310); tft.print(ok ? "WiFi OK " : "WiFi -- ");
+    tft.setCursor(120,0); tft.print(ok ? "W:OK " : "W:-- ");
     tft.setTextColor(mqtt ? ILI9341_GREEN : ILI9341_YELLOW);
-    tft.print(mqtt ? "MQTT OK" : "MQTT --");
+    tft.print(mqtt ? "M:OK" : "M:--");
   }
 public:
   Display() : tft(LCD_CS, LCD_DC, LCD_RESET) {}
