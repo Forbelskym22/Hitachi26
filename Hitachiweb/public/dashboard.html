@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="cs" class="h-full bg-[#0d1117]">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hitachiweb — Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            surface: '#161b22',
+            border:  '#30363d',
+            muted:   '#8b949e',
+            input:   '#0d1117',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0d1117; }
+    ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+  </style>
+</head>
+<body class="min-h-full text-[#e6edf3] font-sans">
+
+<!-- ── HEADER ── -->
+<header class="sticky top-0 z-10 bg-[#0d1117] border-b border-border px-6 py-3 flex items-center justify-between">
+  <div class="flex items-center gap-3">
+    <span class="w-2.5 h-2.5 rounded-full bg-red-600 inline-block"></span>
+    <span class="font-semibold tracking-wide">Dashboard</span>
+    <span id="last-update" class="text-xs text-muted ml-2"></span>
+    <span id="data-source" class="text-xs px-2 py-0.5 rounded-full border border-border text-muted ml-1"></span>
+  </div>
+  <div class="flex items-center gap-4">
+    <span class="text-sm text-muted">Přihlášen jako <strong id="header-user" class="text-[#e6edf3] font-medium"></strong></span>
+    <button id="logout-btn"
+      class="text-xs text-muted border border-border rounded-lg px-3 py-1.5 hover:text-[#e6edf3] hover:border-muted transition-colors">
+      Odhlásit
+    </button>
+  </div>
+</header>
+
+<!-- ── MAIN GRID ── -->
+<main class="p-6 grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+  <!-- ── NAPĚTÍ ── -->
+  <section class="bg-surface border border-border rounded-lg p-5 flex flex-col gap-4">
+    <div class="flex items-center justify-between">
+      <h2 class="font-semibold text-base">Napětí</h2>
+      <span class="text-xs text-muted uppercase tracking-wide">V</span>
+    </div>
+
+    <!-- Live values -->
+    <div class="grid grid-cols-3 gap-3">
+      <div class="bg-input border border-border rounded-lg p-3 text-center">
+        <p class="text-xs text-muted mb-1">L1</p>
+        <p id="v-L1" class="text-xl font-bold text-red-500">—</p>
+      </div>
+      <div class="bg-input border border-border rounded-lg p-3 text-center">
+        <p class="text-xs text-muted mb-1">L2</p>
+        <p id="v-L2" class="text-xl font-bold text-orange-400">—</p>
+      </div>
+      <div class="bg-input border border-border rounded-lg p-3 text-center">
+        <p class="text-xs text-muted mb-1">L3</p>
+        <p id="v-L3" class="text-xl font-bold text-yellow-400">—</p>
+      </div>
+    </div>
+
+    <!-- Chart -->
+    <div class="relative h-48">
+      <canvas id="chart-voltage"></canvas>
+    </div>
+
+    <!-- History table -->
+    <div>
+      <p class="text-xs text-muted uppercase tracking-wide mb-2">Agregovaná historie</p>
+      <div class="overflow-x-auto">
+        <table class="w-full text-xs">
+          <thead>
+            <tr class="text-muted border-b border-border">
+              <th class="text-left py-1.5 pr-3 font-medium">Čas</th>
+              <th class="text-right py-1.5 pr-3 font-medium text-red-400">L1 (V)</th>
+              <th class="text-right py-1.5 pr-3 font-medium text-orange-400">L2 (V)</th>
+              <th class="text-right py-1.5 font-medium text-yellow-400">L3 (V)</th>
+            </tr>
+          </thead>
+          <tbody id="hist-voltage-body" class="divide-y divide-border/30">
+            <tr><td colspan="4" class="text-muted italic py-2 text-center">Čekání na data…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── PROUD ── -->
+  <section class="bg-surface border border-border rounded-lg p-5 flex flex-col gap-4">
+    <div class="flex items-center justify-between">
+      <h2 class="font-semibold text-base">Proud</h2>
+      <span class="text-xs text-muted uppercase tracking-wide">A</span>
+    </div>
+
+    <div class="grid grid-cols-3 gap-3">
+      <div class="bg-input border border-border rounded-lg p-3 text-center">
+        <p class="text-xs text-muted mb-1">L1</p>
+        <p id="a-L1" class="text-xl font-bold text-sky-400">—</p>
+      </div>
+      <div class="bg-input border border-border rounded-lg p-3 text-center">
+        <p class="text-xs text-muted mb-1">L2</p>
+        <p id="a-L2" class="text-xl font-bold text-cyan-400">—</p>
+      </div>
+      <div class="bg-input border border-border rounded-lg p-3 text-center">
+        <p class="text-xs text-muted mb-1">L3</p>
+        <p id="a-L3" class="text-xl font-bold text-teal-400">—</p>
+      </div>
+    </div>
+
+    <div class="relative h-48">
+      <canvas id="chart-current"></canvas>
+    </div>
+
+    <!-- History table -->
+    <div>
+      <p class="text-xs text-muted uppercase tracking-wide mb-2">Agregovaná historie</p>
+      <div class="overflow-x-auto">
+        <table class="w-full text-xs">
+          <thead>
+            <tr class="text-muted border-b border-border">
+              <th class="text-left py-1.5 pr-3 font-medium">Čas</th>
+              <th class="text-right py-1.5 pr-3 font-medium text-sky-400">L1 (A)</th>
+              <th class="text-right py-1.5 pr-3 font-medium text-cyan-400">L2 (A)</th>
+              <th class="text-right py-1.5 font-medium text-teal-400">L3 (A)</th>
+            </tr>
+          </thead>
+          <tbody id="hist-current-body" class="divide-y divide-border/30">
+            <tr><td colspan="4" class="text-muted italic py-2 text-center">Čekání na data…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── STYKAČE ── -->
+  <section class="bg-surface border border-border rounded-lg p-5 flex flex-col gap-4">
+    <div class="flex items-center justify-between">
+      <h2 class="font-semibold text-base">Stykače</h2>
+      <span class="text-xs text-muted uppercase tracking-wide">Stav</span>
+    </div>
+
+    <!-- Contactor states -->
+    <div class="grid grid-cols-3 gap-3">
+      <div class="bg-input border border-border rounded-lg p-3 text-center" id="cont-K1-box">
+        <p class="text-xs text-muted mb-2">K1</p>
+        <div id="cont-K1-dot" class="w-4 h-4 rounded-full mx-auto mb-1 bg-zinc-600"></div>
+        <p id="cont-K1-label" class="text-xs font-semibold text-muted">—</p>
+      </div>
+      <div class="bg-input border border-border rounded-lg p-3 text-center" id="cont-K2-box">
+        <p class="text-xs text-muted mb-2">K2</p>
+        <div id="cont-K2-dot" class="w-4 h-4 rounded-full mx-auto mb-1 bg-zinc-600"></div>
+        <p id="cont-K2-label" class="text-xs font-semibold text-muted">—</p>
+      </div>
+      <div class="bg-input border border-border rounded-lg p-3 text-center" id="cont-K3-box">
+        <p class="text-xs text-muted mb-2">K3</p>
+        <div id="cont-K3-dot" class="w-4 h-4 rounded-full mx-auto mb-1 bg-zinc-600"></div>
+        <p id="cont-K3-label" class="text-xs font-semibold text-muted">—</p>
+      </div>
+    </div>
+
+    <!-- Event log -->
+    <div>
+      <p class="text-xs text-muted uppercase tracking-wide mb-2">Historie změn</p>
+      <ul id="event-log" class="space-y-1.5 max-h-56 overflow-y-auto pr-1">
+        <li class="text-xs text-muted italic">Načítání…</li>
+      </ul>
+    </div>
+  </section>
+
+</main>
+
+<script>
+  // ── Auth check ──
+  fetch('/api/auth/me').then(r => {
+    if (!r.ok) { location.href = '/'; return; }
+    return r.json();
+  }).then(data => {
+    if (!data) return;
+    if (data.mustChangePassword) { location.href = '/'; return; }
+    document.getElementById('header-user').textContent = data.username;
+  });
+
+  document.getElementById('logout-btn').addEventListener('click', async () => {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    location.href = '/';
+  });
+
+  // ── Chart setup ──
+  const CHART_DEFAULTS = {
+    type: 'line',
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { labels: { color: '#8b949e', boxWidth: 12, font: { size: 11 } } },
+        tooltip: { backgroundColor: '#161b22', borderColor: '#30363d', borderWidth: 1, titleColor: '#e6edf3', bodyColor: '#8b949e' },
+      },
+      scales: {
+        x: {
+          type: 'time',
+          time: { unit: 'second', displayFormats: { second: 'HH:mm:ss' } },
+          ticks: { color: '#8b949e', maxTicksLimit: 6, font: { size: 10 } },
+          grid:  { color: '#21262d' },
+        },
+        y: {
+          ticks: { color: '#8b949e', font: { size: 11 } },
+          grid:  { color: '#21262d' },
+        }
+      }
+    }
+  };
+
+  function makeDataset(label, color) {
+    return {
+      label,
+      data: [],
+      borderColor: color,
+      backgroundColor: color + '18',
+      borderWidth: 1.5,
+      pointRadius: 0,
+      tension: 0.3,
+      fill: false,
+    };
+  }
+
+  const voltageChart = new Chart(document.getElementById('chart-voltage'), {
+    ...CHART_DEFAULTS,
+    data: {
+      datasets: [
+        makeDataset('L1', '#f87171'),
+        makeDataset('L2', '#fb923c'),
+        makeDataset('L3', '#facc15'),
+      ]
+    },
+    options: { ...CHART_DEFAULTS.options, scales: { ...CHART_DEFAULTS.options.scales, y: { ...CHART_DEFAULTS.options.scales.y, min: 200, max: 250 } } }
+  });
+
+  const currentChart = new Chart(document.getElementById('chart-current'), {
+    ...CHART_DEFAULTS,
+    data: {
+      datasets: [
+        makeDataset('L1', '#38bdf8'),
+        makeDataset('L2', '#22d3ee'),
+        makeDataset('L3', '#2dd4bf'),
+      ]
+    },
+    options: { ...CHART_DEFAULTS.options, scales: { ...CHART_DEFAULTS.options.scales, y: { ...CHART_DEFAULTS.options.scales.y, min: 0 } } }
+  });
+
+  function pushChartData(chart, history, phases) {
+    phases.forEach((phase, i) => {
+      chart.data.datasets[i].data = history[phase].map(p => ({
+        x: new Date(p.timestamp),
+        y: parseFloat(p.avg.toFixed(2)),
+      }));
+    });
+    chart.update('none');
+  }
+
+  // ── History table renderer ──
+  function renderHistoryTable(tbodyId, history, phases, decimals) {
+    const tbody   = document.getElementById(tbodyId);
+    const baseArr = history[phases[0]] || [];
+    if (!baseArr.length) {
+      tbody.innerHTML = '<tr><td colspan="4" class="text-muted italic py-2 text-center">Žádná data</td></tr>';
+      return;
+    }
+    const recent = [...baseArr].slice().reverse().slice(0, 10);
+    tbody.innerHTML = recent.map((_, i) => {
+      const rowIdx = baseArr.length - 1 - i;
+      const p0     = baseArr[rowIdx];
+      const ts     = new Date(p0.timestamp).toLocaleTimeString('cs-CZ');
+      const vals   = phases.map(ph => {
+        const pt = (history[ph] || [])[rowIdx];
+        if (!pt) return '—';
+        return `<span class="tabular-nums font-mono">${pt.avg.toFixed(decimals)}</span>
+                <span class="text-muted text-[10px]"> (${pt.min.toFixed(decimals)}–${pt.max.toFixed(decimals)})</span>`;
+      });
+      return `<tr class="hover:bg-white/[0.02] transition-colors">
+        <td class="py-1.5 pr-3 text-muted whitespace-nowrap">${ts}</td>
+        ${vals.map(v => `<td class="py-1.5 pr-3 text-right">${v}</td>`).join('')}
+      </tr>`;
+    }).join('');
+  }
+
+  // ── Contactor helpers ──
+  function updateContactor(name, state, lastChanged) {
+    const dot   = document.getElementById(`cont-${name}-dot`);
+    const label = document.getElementById(`cont-${name}-label`);
+    if (state) {
+      dot.className   = 'w-4 h-4 rounded-full mx-auto mb-1 bg-green-500 shadow-[0_0_6px_#22c55e]';
+      label.className = 'text-xs font-semibold text-green-400';
+      label.textContent = 'SEPNUT';
+    } else {
+      dot.className   = 'w-4 h-4 rounded-full mx-auto mb-1 bg-zinc-600';
+      label.className = 'text-xs font-semibold text-zinc-500';
+      label.textContent = 'ROZEPNUT';
+    }
+  }
+
+  function renderEvents(events) {
+    const ul = document.getElementById('event-log');
+    if (!events.length) { ul.innerHTML = '<li class="text-xs text-muted italic">Žádné události</li>'; return; }
+    ul.innerHTML = events.map(ev => {
+      const t   = new Date(ev.timestamp);
+      const ts  = t.toLocaleTimeString('cs-CZ');
+      const cls = ev.state ? 'text-green-400' : 'text-zinc-500';
+      const lbl = ev.state ? 'SEPNUT' : 'ROZEPNUT';
+      return `<li class="flex items-center justify-between text-xs py-1 border-b border-border/40">
+        <span class="text-muted">${ts}</span>
+        <span class="font-medium text-[#e6edf3]">${ev.name}</span>
+        <span class="${cls} font-semibold">${lbl}</span>
+      </li>`;
+    }).join('');
+  }
+
+  // ── Polling ──
+  async function fetchLive() {
+    try {
+      const res  = await fetch('/api/dashboard/live');
+      if (!res.ok) return;
+      const data = await res.json();
+
+      // Voltage
+      ['L1','L2','L3'].forEach(p => {
+        const el = document.getElementById(`v-${p}`);
+        if (el && data.voltage[p] != null) el.textContent = data.voltage[p].toFixed(1);
+      });
+
+      // Current
+      ['L1','L2','L3'].forEach(p => {
+        const el = document.getElementById(`a-${p}`);
+        if (el && data.current[p] != null) el.textContent = data.current[p].toFixed(2);
+      });
+
+      // Contactors
+      Object.entries(data.contactors).forEach(([name, info]) => {
+        updateContactor(name, info.state, info.lastChanged);
+      });
+
+      // Events
+      renderEvents(data.recentEvents);
+
+      // Timestamp + source
+      document.getElementById('last-update').textContent =
+        'Aktualizováno: ' + new Date(data.timestamp).toLocaleTimeString('cs-CZ');
+      const src = document.getElementById('data-source');
+      if (data.source === 'broker') {
+        src.textContent = 'MQTT';
+        src.className = 'text-xs px-2 py-0.5 rounded-full border border-green-700 text-green-400 ml-1';
+      } else {
+        src.textContent = 'SIM';
+        src.className = 'text-xs px-2 py-0.5 rounded-full border border-border text-muted ml-1';
+      }
+
+    } catch (_) {}
+  }
+
+  async function fetchHistory() {
+    try {
+      const res  = await fetch('/api/dashboard/history?limit=50');
+      if (!res.ok) return;
+      const data = await res.json();
+
+      pushChartData(voltageChart, data.voltage, ['L1','L2','L3']);
+      pushChartData(currentChart, data.current, ['L1','L2','L3']);
+      renderHistoryTable('hist-voltage-body', data.voltage, ['L1','L2','L3'], 1);
+      renderHistoryTable('hist-current-body', data.current, ['L1','L2','L3'], 2);
+    } catch (_) {}
+  }
+
+  // Start polling
+  fetchLive();
+  fetchHistory();
+  setInterval(fetchLive,    2_000);
+  setInterval(fetchHistory, 10_000);
+</script>
+</body>
+</html>
